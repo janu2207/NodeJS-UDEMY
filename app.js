@@ -10,8 +10,7 @@ const errorController = require('./controllers/error');
 const User = require('./models/user');
 
 const MONGODB_URI =
-'mongodb+srv://janu2207:Jalend12@cluster0-sgdxc.mongodb.net/shop?retryWrites=true'
-
+'mongodb+srv://janu2207:Jalend12@cluster0-sgdxc.mongodb.net/shop';
 const app = express();
 const store = new MongoDBStore({
   uri: MONGODB_URI,
@@ -37,26 +36,16 @@ app.use(
 );
 
 app.use((req, res, next) => {
-  User.findById('5c5b92578cfd96adf06f7ac5')
+  if (!req.session.user) {
+    return next();
+  }
+  User.findById(req.session.user._id)
     .then(user => {
       req.user = user;
       next();
     })
     .catch(err => console.log(err));
 });
-
-
-// app.use((req, res, next) => {
-//   if (!req.session.user) {
-//     return next();
-//   }
-//   User.findById(req.session.user._id)
-//     .then(user => {
-//       req.user = user;
-//       next();
-//     })
-//     .catch(err => console.log(err));
-// });
 
 app.use('/admin', adminRoutes);
 app.use(shopRoutes);
@@ -67,18 +56,6 @@ app.use(errorController.get404);
 mongoose
   .connect(MONGODB_URI)
   .then(result => {
-    User.findOne().then(user => {
-      if (!user) {
-        const user = new User({
-          name: 'Max',
-          email: 'max@test.com',
-          cart: {
-            items: []
-          }
-        });
-        user.save();
-      }
-    });
     app.listen(3000);
   })
   .catch(err => {
